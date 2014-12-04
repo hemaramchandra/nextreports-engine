@@ -23,6 +23,8 @@ public class StyleFormatConstants {
 
 	public static final String ROMAN_PATTERN = "MCMLXXXVII";
 	public static final String PATTERN = "pattern";
+	//This custom format will allow users to put commas in excel and maintain decimal places as well
+	public static final String CUSTOM_PATTERN="#,###.######";
     public static final String URL = "url";
 
     public static final String FONT_FAMILY_KEY = "font_family"; // ?

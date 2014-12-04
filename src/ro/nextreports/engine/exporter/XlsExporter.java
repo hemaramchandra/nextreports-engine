@@ -16,12 +16,14 @@
  */
 package ro.nextreports.engine.exporter;
 
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -467,6 +469,19 @@ public class XlsExporter extends ResultExporter {
 
         if (style.containsKey(StyleFormatConstants.PATTERN)) {
             String pattern = (String) style.get(StyleFormatConstants.PATTERN);
+            if(pattern.equals(StyleFormatConstants.CUSTOM_PATTERN))
+            {
+            	pattern="[<101]##0.0#;#,###";
+//            	if(value instanceof Double)
+//            	{
+//            		BigDecimal val = new BigDecimal(value.toString());
+//            		if(val.scale()==0 || Double.parseDouble(val.remainder(BigDecimal.ONE).setScale(2).toString())==0)
+//            			pattern = "#,###";
+////            		else if(val.scale()==1)
+////            			pattern = "#0.#";
+//            		
+//            	}
+            }
             HSSFDataFormat format = wb.createDataFormat();
             cellStyle.setDataFormat(format.getFormat(pattern));
         }
@@ -964,8 +979,13 @@ public class XlsExporter extends ResultExporter {
     
 	private InputStream getTemplateInputStream() throws IOException {
 		LOG.info(">>>>>>>>> Look for : " + bean.getReportLayout().getTemplateName());
-		InputStream is = getClass().getResourceAsStream("/" + bean.getReportLayout().getTemplateName());
-		if (is == null) {
+		InputStream is=null;
+		try
+		{
+			is = new FileInputStream("/var/groupon/apache-tomcat/bin/reports/" + bean.getReportLayout().getTemplateName());
+		}
+		catch(FileNotFoundException e)
+		{
 			LOG.error("Template '" + bean.getReportLayout().getTemplateName() + "' not found in classpath.");
 			throw new IOException("Template '" + bean.getReportLayout().getTemplateName() + "' not found.");
 		}

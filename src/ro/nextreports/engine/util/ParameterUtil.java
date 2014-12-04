@@ -1147,6 +1147,34 @@ public class ParameterUtil {
 		return map;
 	}
 	
+	 public static Map<String, QueryParameter> distinctParametersMap(List<Report> reports, String[] dataSourceNames)
+	  {
+	    Map<String,QueryParameter> map = new LinkedHashMap<String,QueryParameter>();
+
+	    if ((reports == null) || (reports.size() == 0)) {
+	      return map;
+	    }
+
+	    if (reports.size() == 1) {
+	      return getUsedParametersMap((Report)reports.get(0), false, false);
+	    }
+
+	    for (int i = 0; i < reports.size(); i++)
+	    {
+	      Map<String,QueryParameter> ParamMap = getUsedParametersMap((Report)reports.get(i), false, false);
+	      for (QueryParameter qp : ParamMap.values())
+	      {
+	        if (!map.containsKey(qp.getName()))
+	        {
+	          qp.setDefaultSource(dataSourceNames[i]);
+	          map.put(qp.getName(), qp);
+	        }
+	      }
+	    }
+
+	    return map;
+	  }
+	
 	/**
 	 * Get a string representation of all parameters values
 	 * @param parametersValues map of parameters
