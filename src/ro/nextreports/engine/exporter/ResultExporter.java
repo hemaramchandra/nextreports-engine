@@ -220,6 +220,7 @@ public abstract class ResultExporter {
     protected Map<String, Object> templatesValues = new LinkedHashMap<String, Object>();
     // for every group keep the current value (this map is used to compute a key for templatesValues)
     private Map<String, String> groupTemplateKeys = new LinkedHashMap<String, String>();
+    private Map<String, Object> groupValues = new LinkedHashMap<String, Object>();
             
     // types of what we are printing
     public static final int PRINT_DOCUMENT = 0;
@@ -908,6 +909,7 @@ public abstract class ResultExporter {
     }
 
     private void groupStarted(GroupCache gc) throws QueryException {
+    	groupValues.put("G"+ gc.getGroup().getName(), getResult().nextValue(gc.getGroup().getColumn()));
         resetFunctions(gc);
         // init functions with first values
         for (FunctionCache fc : gc.getFuncCache()) {
@@ -1170,8 +1172,15 @@ public abstract class ResultExporter {
                 // parameter name used in subreport must be the column alias from parent report !
                 if (!bean.isSubreport() && isDetail) {
                 	Map<String, QueryParameter> params = bean.getParametersBean().getSubreportParams();
+                	if (params.size() == 0) {
+                		// first time we have to look for subreports and add parameters of subreports that are not yet found in master report
+                		List<Report> subreports = ReportUtil.getDetailSubreports(bean.getReportLayout());
+                		for (Report subreport : subreports) {
+                			bean.getParametersBean().addNotFoundSubreportParameters(subreport.getParameters());
+                		}
+                	}                	
                 	for (QueryParameter qp : params.values()) {                								
-						Object pValue = getResult().nextValue(qp.getName());						
+						Object pValue = getResult().nextValue(qp.getName());
 						bean.getParametersBean().setParameterValue(qp.getName(), pValue);
                 	}
                 }
@@ -1994,7 +2003,7 @@ public abstract class ResultExporter {
 			groupValue = getResult().nextValue(groupColumn);			
 		}
 		// keep the current value of the group
-		groupTemplateKeys.put("G"+ gc.getGroup().getName(), "G"+ gc.getGroup().getName() +  "_" +  previousRow[getResult().getColumnIndex(groupColumn)]);		
+		groupTemplateKeys.put("G"+ gc.getGroup().getName(), "G"+ gc.getGroup().getName() +  "_" +  previousRow[getResult().getColumnIndex(groupColumn)]);
 		    	
     	templateKey.append("G").append(gc.getGroup().getName()).append("_F_").
     		append(fbe.getFunction()).append("_").
@@ -2023,6 +2032,7 @@ public abstract class ResultExporter {
 	private boolean needsFirstCrossing() {
 		return ReportUtil.foundFunctionInHeader(bean.getReportLayout()) ||
 			   ReportUtil.foundFunctionInAnyGroupHeader(bean.getReportLayout());
+		//return true;
 	}	
 	
 	private Band getBand(ReportLayout layout, int gridRow) {
@@ -2049,6 +2059,15 @@ public abstract class ResultExporter {
 		} else {			
 			return I18nUtil.getLanguageByName(bean.getReportLayout(), bean.getLanguage());
 		}
+	}
+	
+	// group is G1, G2 ,...
+	protected String getCurrentValueForGroup(String group) {
+		Object obj = groupValues.get(group);
+		if (obj == null) {
+			return "";
+		}
+		return obj.toString();
 	}
        
 }
