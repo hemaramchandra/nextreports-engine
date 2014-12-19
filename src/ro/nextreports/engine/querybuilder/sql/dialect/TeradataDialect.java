@@ -14,7 +14,7 @@ public class TeradataDialect extends AbstractDialect {
 		registerColumnType("varchar", Types.VARCHAR);
 		registerColumnType("date", Types.DATE);
 		registerColumnType("timestamp", Types.TIMESTAMP);
-		registerColumnType("timestamp with timezone", Types.TIMESTAMP);
+		registerColumnType("timestamp with time zone", Types.TIMESTAMP);
 		registerColumnType("datetime", Types.TIMESTAMP);
 		registerColumnType("smalldatetime", Types.TIMESTAMP);
 		registerColumnType("double precision", Types.DOUBLE);

@@ -21,10 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 /**
@@ -44,7 +41,7 @@ public final class XlsUtil {
 	 * @param sheet the sheet that is copied
 	 * @return column number
 	 */
-	public static int copyToSheet(HSSFSheet parentSheet, int parentSheetRow, int parentSheetColumn, HSSFSheet sheet) {
+	public static int copyToSheet(Sheet parentSheet, int parentSheetRow, int parentSheetColumn, Sheet sheet) {
 		return copyToSheet(parentSheet, parentSheetRow, parentSheetColumn, sheet, true);
 	}
 
@@ -58,12 +55,12 @@ public final class XlsUtil {
 	 * @param copyStyle true to copy the style
 	 * @return column number
 	 */
-	public static int copyToSheet(HSSFSheet parentSheet, int parentSheetRow, int parentSheetColumn, HSSFSheet sheet, boolean copyStyle) {
+	public static int copyToSheet(Sheet parentSheet, int parentSheetRow, int parentSheetColumn, Sheet sheet, boolean copyStyle) {
 		int maxColumnNum = 0;
-		Map<Integer, HSSFCellStyle> styleMap = (copyStyle) ? new HashMap<Integer, HSSFCellStyle>() : null;
+		Map<Integer, CellStyle> styleMap = (copyStyle) ? new HashMap<Integer, CellStyle>() : null;
 		for (int i = sheet.getFirstRowNum(); i <= sheet.getLastRowNum(); i++) {
-			HSSFRow srcRow = sheet.getRow(i);
-			HSSFRow destRow;
+			Row srcRow = sheet.getRow(i);
+			Row destRow;
 			// subreport is not the first cell in a row
 			if ((parentSheetColumn > 0) && (i == sheet.getFirstRowNum())) {
 				destRow = parentSheet.getRow(parentSheetRow);
@@ -99,17 +96,17 @@ public final class XlsUtil {
 	 * @param styleMap style map
 	 *       
 	 */
-	public static void copyRow(HSSFSheet srcSheet, HSSFSheet destSheet, int parentSheetRow, int parentSheetColumn, HSSFRow srcRow, HSSFRow destRow,
-			Map<Integer, HSSFCellStyle> styleMap) {
+	public static void copyRow(Sheet srcSheet, Sheet destSheet, int parentSheetRow, int parentSheetColumn, Row srcRow, Row destRow,
+			Map<Integer, CellStyle> styleMap) {
 		// manage a list of merged zone in order to not insert two times a
 		// merged zone
 		Set<CellRangeAddressWrapper> mergedRegions = new TreeSet<CellRangeAddressWrapper>();
 		destRow.setHeight(srcRow.getHeight());
 		// pour chaque row
 		for (int j = srcRow.getFirstCellNum(); j <= srcRow.getLastCellNum(); j++) {
-			HSSFCell oldCell = srcRow.getCell(j); // ancienne cell			
+			Cell oldCell = srcRow.getCell(j); // ancienne cell			
 			if (oldCell != null) {				
-				HSSFCell newCell = destRow.createCell(parentSheetColumn + j);				
+				Cell newCell = destRow.createCell(parentSheetColumn + j);				
 				copyCell(oldCell, newCell, styleMap);
 				
 				CellRangeAddress mergedRegion = getMergedRegion(srcSheet, srcRow.getRowNum(), (short) oldCell.getColumnIndex());
@@ -139,13 +136,13 @@ public final class XlsUtil {
 	 * @param newCell cell to be created
 	 * @param styleMap style map
 	 */
-	public static void copyCell(HSSFCell oldCell, HSSFCell newCell, Map<Integer, HSSFCellStyle> styleMap) {
+	public static void copyCell(Cell oldCell, Cell newCell, Map<Integer, CellStyle> styleMap) {
 		if (styleMap != null) {			
 			if (oldCell.getSheet().getWorkbook() == newCell.getSheet().getWorkbook()) {
 				newCell.setCellStyle(oldCell.getCellStyle());
 			} else {				
 				int stHashCode = oldCell.getCellStyle().hashCode();
-				HSSFCellStyle newCellStyle = styleMap.get(stHashCode);				
+				CellStyle newCellStyle = styleMap.get(stHashCode);				
 				if (newCellStyle == null) {					
 					newCellStyle = newCell.getSheet().getWorkbook().createCellStyle();
 					newCellStyle.cloneStyleFrom(oldCell.getCellStyle());					
@@ -155,22 +152,22 @@ public final class XlsUtil {
 			}			
 		}
 		switch (oldCell.getCellType()) {
-		case HSSFCell.CELL_TYPE_STRING:
+		case Cell.CELL_TYPE_STRING:
 			newCell.setCellValue(oldCell.getStringCellValue());
 			break;
-		case HSSFCell.CELL_TYPE_NUMERIC:
+		case Cell.CELL_TYPE_NUMERIC:
 			newCell.setCellValue(oldCell.getNumericCellValue());
 			break;
-		case HSSFCell.CELL_TYPE_BLANK:
-			newCell.setCellType(HSSFCell.CELL_TYPE_BLANK);
+		case Cell.CELL_TYPE_BLANK:
+			newCell.setCellType(Cell.CELL_TYPE_BLANK);
 			break;
-		case HSSFCell.CELL_TYPE_BOOLEAN:
+		case Cell.CELL_TYPE_BOOLEAN:
 			newCell.setCellValue(oldCell.getBooleanCellValue());
 			break;
-		case HSSFCell.CELL_TYPE_ERROR:
+		case Cell.CELL_TYPE_ERROR:
 			newCell.setCellErrorValue(oldCell.getErrorCellValue());
 			break;
-		case HSSFCell.CELL_TYPE_FORMULA:
+		case Cell.CELL_TYPE_FORMULA:
 			newCell.setCellFormula(oldCell.getCellFormula());
 			break;
 		default:
@@ -179,7 +176,7 @@ public final class XlsUtil {
 
 	}
 	
-	public static CellRangeAddress getMergedRegion(HSSFSheet sheet, int rowNum, short cellNum) {
+	public static CellRangeAddress getMergedRegion(Sheet sheet, int rowNum, short cellNum) {
 		for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
 			CellRangeAddress merged = sheet.getMergedRegion(i);
 			if (merged.isInRange(rowNum, cellNum)) {
